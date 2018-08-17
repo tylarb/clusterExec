@@ -1,9 +1,9 @@
 package clusterExec
 
 import (
-	"time"
-
 	"golang.org/x/crypto/ssh"
+	"os/user"
+	"time"
 )
 
 /* clusterExec takes hostnames and bash commands as input.
@@ -12,23 +12,34 @@ then executes bash commands using concurrency.
 
 */
 
+const (
+	// Default ssh port
+	PORT = 22
+)
+
 // SSHCluster is the ssh cluster struct
 type SSHCluster struct {
 	Hosts               []string
 	Port                int
-	SSHConfig           *ssh.ClientConfig
+	SSHConfig           *ssh.ClientConfig //TODO unsure if this should be in the cluster config
 	GlobalTimeout       time.Time
 	CommandTimeout      time.Time
 	EnsureExecute       bool
 	ExecuteConcurrently bool
+	Username            string
 }
 
 // ConnectOption allows for functional API options to be added to an SSH Cluster
 type ConnectOption func(*SSHCluster)
 
-// Connect generates a pointer to a new SSH cluster
-func Connect(hosts []string, options ...ConnectOption) (*SSHCluster, error) {
-	return nil, nil
+// CreateCluster generates a pointer to a new SSH cluster
+func CreateCluster(hosts []string, options ...ConnectOption) (*SSHCluster, error) {
+	user := user.Current().Username
+	cluster := SSHCluster{Hosts: hosts, Port: PORT, EnsureExecute: true, ExecuteConcurrently: true}
+	for _, opt := range options {
+		opt(&cluster)
+	}
+	return &cluster, nil
 }
 
 // Run runs bash commands on the SSH cluster
@@ -76,6 +87,13 @@ func ConnectOptionIgnoreExecuteSuccess() ConnectOption {
 func ConnectOptionNotConcurrent() ConnectOption {
 	return func(cluster *SSHCluster) {
 		cluster.ExecuteConcurrently = false
+	}
+}
+
+//ConnectOptionUsername changes the connecting username (default is os.CurrentUser)
+func ConnectOptionUsername(name string) ConnectOption {
+	return func(cluster *SSHCluster) {
+		cluster.Username = name
 	}
 }
 
