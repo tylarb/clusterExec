@@ -2,6 +2,9 @@ package clusterExec
 
 import "time"
 
+// ConnectOption allows for functional API options to be added to an SSH Cluster
+type ConnectOption func(*SSHCluster)
+
 // TODO: Add Options...
 // different id_rsa, etc file
 // Different user name
@@ -14,7 +17,7 @@ func ConnectOptionPort(port int) ConnectOption {
 }
 
 // ConnectOptionGlobalTimeout sets the timeout for executing all provided commands
-func ConnectOptionGlobalTimeout(timeout time.Time) ConnectOption {
+func ConnectOptionGlobalTimeout(timeout time.Duration) ConnectOption {
 	return func(cluster *SSHCluster) {
 		cluster.GlobalTimeout = timeout
 	}
@@ -22,7 +25,7 @@ func ConnectOptionGlobalTimeout(timeout time.Time) ConnectOption {
 
 // ConnectOptionCommandTimeout sets the timeout for any individual command.
 // Global timeout superceeds this setting
-func ConnectOptionCommandTimeout(timeout time.Time) ConnectOption {
+func ConnectOptionCommandTimeout(timeout time.Duration) ConnectOption {
 	return func(cluster *SSHCluster) {
 		cluster.CommandTimeout = timeout
 	}

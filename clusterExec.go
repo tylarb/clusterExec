@@ -24,15 +24,12 @@ type SSHCluster struct {
 	Hosts               []string
 	Port                int
 	SSHConfig           *ssh.ClientConfig //TODO unsure if this should be in the cluster config
-	GlobalTimeout       time.Time
-	CommandTimeout      time.Time
+	GlobalTimeout       time.Duration
+	CommandTimeout      time.Duration
 	EnsureExecute       bool
 	ExecuteConcurrently bool
 	Username            string
 }
-
-// ConnectOption allows for functional API options to be added to an SSH Cluster
-type ConnectOption func(*SSHCluster)
 
 // CreateCluster generates a pointer to a new SSH cluster
 func CreateCluster(hosts []string, options ...ConnectOption) (*SSHCluster, error) {
@@ -48,6 +45,6 @@ func CreateCluster(hosts []string, options ...ConnectOption) (*SSHCluster, error
 }
 
 // Exec runs bash commands on the SSH cluster
-func (cluster *SSHCluster) Exec(commands []string) error {
+func (cluster *SSHCluster) Exec(commands []ClusterCmd) error {
 	return nil
 }
