@@ -8,10 +8,8 @@ go:
 
 before_install: 
         - ssh-keygen -t rsa -f ./test_key -q -N ""
-        - docker build -t ssh22 ./ci/ssh22/
-        - docker build -t ssh25 ./ci/ssh25/
-        - docker run -d -h ssh22 --name ssh22  -p 22:22 ssh22 
-        - docker run -d -h ssh25 --name ssh25 -p 25:25  ssh25
+        - docker-compose -f ./ci/port22/docker-compose.yml up
+        - docker-compose -f ./ci/port25/docker-compose.yml up
 
-install: ./ci/keyexchange.sh
+install: ./ci/keyscan.sh
 
