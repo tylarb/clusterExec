@@ -18,7 +18,7 @@ type ClusterCmd struct {
 
 // ClusterOut is the response from ONE host for ONE command
 type ClusterOut struct {
-	done chan bool
+	done   chan bool
 	Stdin  *bytes.Buffer
 	Stdout *bytes.Buffer
 	Stderr *bytes.Buffer
@@ -49,6 +49,7 @@ func (clusterCommand *ClusterCmd) Run(wg *sync.WaitGroup, done chan bool) {
 }
 
 // CommandsRun runs an array of cluster commands via goroutines
+/*
 func CommandsRun(clusterCmds []ClusterCmd) ([]ClusterCmd, error) {
 	var wg *sync.WaitGroup
 	wg.Add(len(commands))
@@ -59,6 +60,9 @@ func CommandsRun(clusterCmds []ClusterCmd) ([]ClusterCmd, error) {
 		go clusterCmd.Run(wg)
 	}
 	select {
-		
+
 	}
 }
+
+
+*/

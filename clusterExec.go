@@ -1,10 +1,7 @@
 package clusterExec
 
 import (
-	"os/user"
 	"time"
-
-	"golang.org/x/crypto/ssh"
 )
 
 /* clusterExec takes hostnames and bash commands as input.
@@ -13,31 +10,20 @@ then executes bash commands using concurrency.
 
 */
 
-const (
-	// Default ssh port
-	PORT = 22
-)
-
 // SSHCluster is the base cluster struct.
 // It forms a grouping of a host or hosts on which a list of commands will be executed
 type SSHCluster struct {
-	Hosts               []string
-	Port                int
-	SSHConfig           *ssh.ClientConfig //TODO unsure if this should be in the cluster config
-	GlobalTimeout       time.Duration
-	CommandTimeout      time.Duration
-	EnsureExecute       bool
-	ExecuteConcurrently bool
-	Username            string
+	Nodes          []*ClusterNode
+	GlobalTimeout  time.Duration
+	CommandTimeout time.Duration // Option - filepath to make for easy scanning of keys?
+	//	EnsureExecute       bool  //WIP may be added later
+	//	ExecuteConcurrently bool  // WIP may be added later
 }
 
 // CreateCluster generates a pointer to a new SSH cluster
-func CreateCluster(hosts []string, options ...ConnectOption) (*SSHCluster, error) {
-	user, err := user.Current()
-	if err != nil {
-		panic(err)
-	}
-	cluster := SSHCluster{Hosts: hosts, Port: PORT, EnsureExecute: true, ExecuteConcurrently: true, Username: user.Username}
+func CreateCluster(nodes []*ClusterNode, options ...ClusterOption) (*SSHCluster, error) {
+
+	cluster := SSHCluster{Nodes: nodes}
 	for _, opt := range options {
 		opt(&cluster)
 	}
