@@ -6,7 +6,7 @@ services:
                 container_name: ssh0
                 hostname: ssh0.cluster25
                 networks:
-                        clusterExec:
+                        cluster25:
                                 ipv4_address: 172.25.0.10
 
         ssh1: 
@@ -14,14 +14,14 @@ services:
                 container_name: ssh1
                 hostname: ssh1.cluster25
                 networks:
-                        clusterExec:
+                        cluster25:
                                 ipv4_address: 172.25.0.11
         ssh2: 
                 build: .
                 container_name: ssh2
                 hostname: ssh2.cluster25
                 networks:
-                        clusterExec:
+                        cluster25:
                                 ipv4_address: 172.25.0.12
 
         ssh3: 
@@ -29,7 +29,7 @@ services:
                 container_name: ssh3
                 hostname: ssh3.cluster25
                 networks:
-                        clusterExec:
+                        cluster25:
                                 ipv4_address: 172.25.0.13
                                 
 
