@@ -3,7 +3,7 @@ version: '3'
 services:
         ssh0:
                 build: .
-                container_name: ssh0
+                container_name: ssh0-25
                 hostname: ssh0.cluster25
                 networks:
                         cluster25:
@@ -11,14 +11,14 @@ services:
 
         ssh1: 
                 build: .
-                container_name: ssh1
+                container_name: ssh1-25
                 hostname: ssh1.cluster25
                 networks:
                         cluster25:
                                 ipv4_address: 172.25.0.11
         ssh2: 
                 build: .
-                container_name: ssh2
+                container_name: ssh2-25
                 hostname: ssh2.cluster25
                 networks:
                         cluster25:
@@ -26,7 +26,7 @@ services:
 
         ssh3: 
                 build: .
-                container_name: ssh3
+                container_name: ssh3-25
                 hostname: ssh3.cluster25
                 networks:
                         cluster25:
