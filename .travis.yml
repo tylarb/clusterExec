@@ -11,5 +11,7 @@ before_install:
         - docker-compose -f ./ci/port22/docker-compose.yml up -d
         - docker-compose -f ./ci/port25/docker-compose.yml up -d
 
-install: ./ci/keyscan.sh
+install: 
+        - ./ci/keyscan.sh
+        - dep ensure 
 
