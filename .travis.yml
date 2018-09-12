@@ -8,8 +8,8 @@ go:
 
 before_install: 
         - ssh-keygen -t rsa -f ./test_key -q -N ""
-        - docker-compose -f ./ci/port22/docker-compose.yml up
-        - docker-compose -f ./ci/port25/docker-compose.yml up
+        - docker-compose -f ./ci/port22/docker-compose.yml up -d
+        - docker-compose -f ./ci/port25/docker-compose.yml up -d
 
 install: ./ci/keyscan.sh
 
