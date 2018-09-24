@@ -4,56 +4,78 @@ import (
 	"bufio"
 	"errors"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"golang.org/x/crypto/ssh"
 )
 
 const (
-	// Default ssh port
+	// PORT is the default ssh port
 	PORT = 22
 )
 
 // ClusterNode contains information to collect to a single ssh node
 type ClusterNode struct {
-	Localhost bool // true if host is local, to avoid using ssh
-	User      string
-	Hostname  string
-	Port      int
-	Auth      []ssh.AuthMethod
-	Config    *ssh.ClientConfig
-	Files     NodeFiles // connection files to access the node
-}
-
-// NodeFiles are the files used to connect to a cluster node - i.e. keys and known_hosts
-type NodeFiles struct {
-	PublicKeyFile  string
+	Localhost      bool // true if host is local, to avoid using ssh
+	User           string
+	Hostname       string
+	Port           int
+	Auth           []ssh.AuthMethod
+	Config         *ssh.ClientConfig
+	HostKeyCheck   bool
 	KnownHostsFile string
 }
 
 // CreateNode returns a single node for the cluster
 func CreateNode(user, hostname string, options ...NodeOption) (*ClusterNode, error) {
-	node := ClusterNode{User: user, Hostname: hostname, Port: PORT}
-	node.GetDefaultFiles()
+	node := ClusterNode{User: user, Hostname: hostname, Port: PORT, HostKeyCheck: true}
 
 	for _, opt := range options {
 		opt(&node)
 	}
+
+	if node.Config == nil { // config isn't provided as a NodeOption, we'll compose it from other options
+		if err := node.GetConfig(); err != nil {
+			return nil, err
+		}
+	}
+
 	return &node, nil
 }
 
-func (node *ClusterNode) GetDefaultFiles() {
-	node.Files.KnownHostsFile = filepath.Join(os.Getenv("HOME"), ".ssh", "known_hosts")
-	node.Files.PublicKeyFile = filepath.Join(os.Getenv("HOME"), ".ssh", "id_rsa.pub") // FIXME other key types?
-}
-
+// GetConfig generates an ssh config given an auth method, user, and (if applicable) known hosts file
 func (node *ClusterNode) GetConfig() error {
 	var config ssh.ClientConfig
-	// file, err := os.Open(filepath.Join(os.Getenv("HOME"), ".ssh", "known_hosts"))
-	file, err := os.Open(node.Files.KnownHostsFile)
+
+	if len(node.Auth) == 0 {
+		return errors.New("Programming error: No auth method provided, cannot compose ssh configuration")
+	}
+
+	config.User = node.User
+	config.Auth = node.Auth
+
+	if node.HostKeyCheck {
+		if node.KnownHostsFile == "" {
+			return errors.New("Programming error: no known hosts file name provided")
+		}
+		var err error
+		config.HostKeyCallback, err = parseHostKeys(node.Hostname, node.KnownHostsFile)
+		if err != nil {
+			return err
+		}
+	} else {
+		config.HostKeyCallback = ssh.InsecureIgnoreHostKey()
+	}
+
+	node.Config = &config
+	return nil
+
+}
+
+func parseHostKeys(hostname, keyfile string) (ssh.HostKeyCallback, error) {
+	file, err := os.Open(keyfile)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer file.Close()
 
@@ -64,25 +86,19 @@ func (node *ClusterNode) GetConfig() error {
 		if len(fields) != 3 {
 			continue
 		}
-		if strings.Contains(fields[0], node.Hostname) {
+		if strings.Contains(fields[0], hostname) {
 			var err error
 			hostKey, _, _, _, err = ssh.ParseAuthorizedKey(scanner.Bytes())
 			if err != nil {
-				return err
-
+				return nil, err
 			}
 			break
 		}
 	}
 	if hostKey == nil {
-		return errors.New("key for this host is nil - make sure known_hosts is valid")
+		return nil, errors.New("Key found for this host - make sure known_hosts_file is valid")
 	}
-
-	config.User = node.User
-	config.HostKeyCallback = ssh.FixedHostKey(hostKey)
-	config.Auth = node.Auth
-	node.Config = &config
-	return nil
+	return ssh.FixedHostKey(hostKey), nil
 
 }
 
@@ -96,22 +112,38 @@ func NodeOptionPort(port int) NodeOption {
 	}
 }
 
+// NodeOptionIsLocalhost indicates the node is a localhost (avoids using ssh)
+func NodeOptionIsLocalhost() NodeOption {
+	return func(node *ClusterNode) {
+		node.Localhost = true
+	}
+}
+
+// NodeOptionAuthMethod adds an ssh authentication method to a node
 func NodeOptionAuthMethod(auth ssh.AuthMethod) NodeOption {
 	return func(node *ClusterNode) {
 		node.Auth = append(node.Auth, auth)
 	}
 }
 
-func NodeOptionKnownHostFile(file string) NodeOption {
+// NodeOptionKnownHostsFile sets the filename for the known hosts file (will be ignored if "HostKeyCheck" is false
+func NodeOptionKnownHostsFile(file string) NodeOption {
 	// if file == ""  return err if no file
 	return func(node *ClusterNode) {
-		node.Files.KnownHostsFile = file
+		node.KnownHostsFile = file
 	}
 }
 
-func NodeOptionPubKeyFile(file string) NodeOption {
-	// if file == "" return err if no file
+// NodeOptionConfig provdes a full ssh.ClientConfig to a node
+func NodeOptionConfig(config *ssh.ClientConfig) NodeOption {
 	return func(node *ClusterNode) {
-		node.Files.PublicKeyFile = file
+		node.Config = config
+	}
+}
+
+// NodeOptionHostKeyCheck sets if a known host key check will be to verify the ssh connection
+func NodeOptionHostKeyCheck(check bool) NodeOption {
+	return func(node *ClusterNode) {
+		node.HostKeyCheck = check
 	}
 }
