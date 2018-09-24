@@ -61,15 +61,13 @@ func TestGetConfig(t *testing.T) {
 		t.Log(err)
 		t.Fail()
 	}
-	config := &ssh.ClientConfig{
-		User: USER,
-		Auth: []ssh.AuthMethod{
-			ssh.Password("password"),
-		},
-	}
-	config.HostKeyCallback, err = parseHostKeys("172.25.0.10", dir+"/known_hosts")
-	if node.Config != config {
-		t.Log("Failed to set config correctly")
+
+	hostaddress := node.Hostname + ":" + string(node.Port)
+	client, err := ssh.Dial("tcp", hostaddress, node.Config)
+	if err != nil {
+		t.Log("Failed to generate valid config")
+		t.Log(err)
 		t.Fail()
 	}
+	client.Close()
 }

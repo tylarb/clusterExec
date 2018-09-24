@@ -96,7 +96,7 @@ func parseHostKeys(hostname, keyfile string) (ssh.HostKeyCallback, error) {
 		}
 	}
 	if hostKey == nil {
-		return nil, errors.New("Key found for this host - make sure known_hosts_file is valid")
+		return nil, errors.New("No key found for this host - make sure known_hosts_file is valid")
 	}
 	return ssh.FixedHostKey(hostKey), nil
 
