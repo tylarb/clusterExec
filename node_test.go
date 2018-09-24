@@ -39,7 +39,7 @@ func TestCreateNode(t *testing.T) {
 		t.Fail()
 	}
 
-	node2, err := CreateNode(USER, "172.25.0.10", NodeOptionPort(25), NodeOptionAuthMethod(ssh.Password("password")), NodeOptionKnownHostsFile(currentDir+"known_hosts"))
+	node2, err := CreateNode(USER, "172.25.0.10", NodeOptionPort(25), NodeOptionAuthMethod(ssh.Password("password")), NodeOptionKnownHostsFile(currentDir+"/known_hosts"))
 	if err != nil {
 		t.Error(err)
 	}
@@ -61,7 +61,7 @@ func TestGetConfig(t *testing.T) {
 		t.Error(err)
 	}
 
-	node, err := CreateNode(USER, "172.25.0.10", NodeOptionPort(25), NodeOptionAuthMethod(ssh.Password("password")), NodeOptionKnownHostsFile(currentDir+"known_hosts"))
+	node, err := CreateNode(USER, "172.25.0.10", NodeOptionPort(25), NodeOptionAuthMethod(ssh.Password("password")), NodeOptionKnownHostsFile(currentDir+"/known_hosts"))
 	if err != nil {
 		t.Error(err)
 	}
@@ -75,7 +75,7 @@ func TestGetConfig(t *testing.T) {
 			ssh.Password("password"),
 		},
 	}
-	config.HostKeyCallback, err = parseHostKeys("172.25.0.10", currentDir+"known_hosts")
+	config.HostKeyCallback, err = parseHostKeys("172.25.0.10", currentDir+"/known_hosts")
 	if node.Config != config {
 		t.Log("Failed to set config correctly")
 		t.Fail()
