@@ -1,11 +1,6 @@
 package clusterExec
 
 import (
-	"bufio"
-	"errors"
-	"os"
-	"strings"
-
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/knownhosts"
 )
@@ -70,36 +65,6 @@ func (node *ClusterNode) GetConfig() error {
 
 	node.Config = &config
 	return nil
-
-}
-
-func parseHostKeys(hostname, keyfile string) (ssh.HostKeyCallback, error) {
-	file, err := os.Open(keyfile)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	var hostKey ssh.PublicKey
-	for scanner.Scan() {
-		fields := strings.Split(scanner.Text(), " ")
-		if len(fields) != 3 {
-			continue
-		}
-		if strings.Contains(fields[0], hostname) {
-			var err error
-			hostKey, _, _, _, err = ssh.ParseAuthorizedKey(scanner.Bytes())
-			if err != nil {
-				return nil, err
-			}
-			break
-		}
-	}
-	if hostKey == nil {
-		return nil, errors.New("clusterExec: No key found for this host - make sure known_hosts file is valid")
-	}
-	return ssh.FixedHostKey(hostKey), nil
 
 }
 
