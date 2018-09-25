@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/knownhosts"
 )
 
 const (
@@ -48,7 +49,7 @@ func (node *ClusterNode) GetConfig() error {
 	var config ssh.ClientConfig
 
 	if len(node.Auth) == 0 {
-		return errors.New("Programming error: No auth method provided, cannot compose ssh configuration")
+		panic("programming error: no auth method provided, cannot compose ssh config")
 	}
 
 	config.User = node.User
@@ -56,10 +57,10 @@ func (node *ClusterNode) GetConfig() error {
 
 	if node.HostKeyCheck {
 		if node.KnownHostsFile == "" {
-			return errors.New("Programming error: no known hosts file name provided")
+			panic("programming error: no known hosts file name provided")
 		}
 		var err error
-		config.HostKeyCallback, err = parseHostKeys(node.Hostname, node.KnownHostsFile)
+		config.HostKeyCallback, err = knownhosts.New(node.KnownHostsFile)
 		if err != nil {
 			return err
 		}
@@ -96,7 +97,7 @@ func parseHostKeys(hostname, keyfile string) (ssh.HostKeyCallback, error) {
 		}
 	}
 	if hostKey == nil {
-		return nil, errors.New("No key found for this host - make sure known_hosts_file is valid")
+		return nil, errors.New("clusterExec: No key found for this host - make sure known_hosts file is valid")
 	}
 	return ssh.FixedHostKey(hostKey), nil
 
