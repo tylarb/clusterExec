@@ -11,13 +11,14 @@
     "internal/chacha20",
     "internal/subtle",
     "poly1305",
-    "ssh"
+    "ssh",
+    "ssh/knownhosts"
   ]
   revision = "0e37d006457bf46f9e6692014ba72ef82c33022c"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ef14b21639fbe1b2016972804e34d4c886e5ce475d13a13bae107b2a7d8cb6f9"
+  inputs-digest = "10e88c78c011692fedd935a6f6b3441404faf4b924abe08d3f8b436d78fbe9d7"
   solver-name = "gps-cdcl"
   solver-version = 1

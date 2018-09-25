@@ -10,8 +10,8 @@ before_install:
         - ssh-keygen -t rsa -f ./test_key -q -N ""
         - docker-compose -f ./ci/port22/docker-compose.yml up -d
         - docker-compose -f ./ci/port25/docker-compose.yml up -d
+        - docker ps
         - ./ci/keyscan.sh
         - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh  
         - dep ensure
-
 

@@ -1,6 +1,7 @@
 package clusterExec
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -62,7 +63,7 @@ func TestGetConfig(t *testing.T) {
 		t.Fail()
 	}
 
-	hostaddress := node.Hostname + ":" + string(node.Port)
+	hostaddress := fmt.Sprintf("%s:%d", node.Hostname, node.Port)
 	client, err := ssh.Dial("tcp", hostaddress, node.Config)
 	if err != nil {
 		t.Log("Failed to generate valid config")
