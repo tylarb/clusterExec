@@ -10,7 +10,7 @@ import (
 
 const USER = "root"
 
-var dir = os.Getenv("TRAVIS_BUILD_DIR")
+var dir = os.Getenv("HOME") + "/.ssh"
 
 func TestCreateNode(t *testing.T) {
 

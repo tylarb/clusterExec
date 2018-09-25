@@ -10,8 +10,18 @@ before_install:
         - ssh-keygen -t rsa -f ./test_key -q -N ""
         - docker-compose -f ./ci/port22/docker-compose.yml up -d
         - docker-compose -f ./ci/port25/docker-compose.yml up -d
+        - docker ps
         - ./ci/keyscan.sh
         - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh  
         - dep ensure
 
-
+addons:
+        ssh_known_hosts:
+                - 172.22.0.10
+                - 172.22.0.11
+                - 172.22.0.12
+                - 172.22.0.13
+                - 172.25.0.10:25
+                - 172.25.0.11:25
+                - 172.25.0.12:25
+                - 172.25.0.13:25
