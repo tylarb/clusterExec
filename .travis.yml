@@ -15,13 +15,3 @@ before_install:
         - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh  
         - dep ensure
 
-addons:
-        ssh_known_hosts:
-                - 172.22.0.10
-                - 172.22.0.11
-                - 172.22.0.12
-                - 172.22.0.13
-                - 172.25.0.10:25
-                - 172.25.0.11:25
-                - 172.25.0.12:25
-                - 172.25.0.13:25
