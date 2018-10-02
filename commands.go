@@ -2,50 +2,82 @@ package clusterExec
 
 import (
 	"bytes"
-	"os/exec"
-	"sync"
+	"fmt"
+	"strings"
 	"time"
 )
 
 // ClusterCmd is a single command which can be passed to an individual node in the cluster
 type ClusterCmd struct {
-	Cmd         string
-	Args        []string
-	Timeout     time.Duration
-	KillCommand chan bool
-	CmdOut      ClusterOut
-}
-
-// ClusterOut is the response from ONE host for ONE command
-type ClusterOut struct {
-	done   chan bool
-	Stdin  *bytes.Buffer
-	Stdout *bytes.Buffer
-	Stderr *bytes.Buffer
-	Err    error
+	Cmd            string
+	Args           []string
+	Timeout        time.Duration
+	Stdout, Stderr *bytes.Buffer
 }
 
 // CreateClusterCommand creates a new cluster command
 func CreateClusterCommand(cmd string, args []string, options ...ClusterCmdOption) *ClusterCmd {
-	clusterCommand := ClusterCmd{Cmd: cmd, Args: args, KillCommand: make(chan bool)}
+	clusterCommand := ClusterCmd{Cmd: cmd, Args: args, Stdout: new(bytes.Buffer), Stderr: new(bytes.Buffer)}
 	for _, opt := range options {
 		opt(&clusterCommand)
 	}
 	return &clusterCommand
 }
 
-// Run executes a cluster comman
-func (clusterCommand *ClusterCmd) Run(wg *sync.WaitGroup, done chan bool) {
-	if wg != nil { // perhaps this should be if wg == nil {return}
-		defer wg.Done()
-		cmd := exec.Command(clusterCommand.Cmd, clusterCommand.Args...)
-		cmd.Stdout = clusterCommand.CmdOut.Stdout
-		cmd.Stderr = clusterCommand.CmdOut.Stderr
-		cmd.Stdin = clusterCommand.CmdOut.Stdin
-
-		clusterCommand.CmdOut.Err = cmd.Run()
-
+// Run executes a command on a cluster node.
+func (node *ClusterNode) Run(command *ClusterCmd) error {
+	var err error
+	if node.Localhost {
+		err = node.runLocalCommand(command)
+	} else {
+		err = node.runRemoteCommand(command)
 	}
+	return err
+}
+
+// runs command locally if localhost
+func (node *ClusterNode) runLocalCommand(command *ClusterCmd) error {
+
+	return nil
+}
+
+// runs commands remotely over ssh
+func (node *ClusterNode) runRemoteCommand(command *ClusterCmd) error {
+
+	if node.Client == nil {
+		return &NodeConnectionError{"Existing ssh connection", node}
+	}
+	session, err := node.Client.NewSession()
+	if err != nil {
+		return err
+	}
+	session.Stdout = command.Stdout
+	session.Stderr = command.Stderr
+	cmdString := composeCmd(command.Cmd, command.Args)
+	err = session.Start(cmdString)
+	if err != nil {
+		return err
+	}
+	go func() {
+		session.Wait()
+	}()
+
+	return nil
+}
+func composeCmd(cmd string, args []string) string {
+	command := cmd + " " + strings.Join(args, " ")
+	return command
+}
+
+// NodeConnectionError is returned if a node does not have an existing client connection when
+// a command is attempted to run, or has some other networking error
+type NodeConnectionError struct {
+	err  string
+	node *ClusterNode
+}
+
+func (n NodeConnectionError) Error() string {
+	return fmt.Sprintf("clusterExec: node address %s: %s", n.node.Addr, n.err)
 }
 
 // CommandsRun runs an array of cluster commands via goroutines

@@ -1,6 +1,9 @@
 package clusterExec
 
 import (
+	"fmt"
+	"io/ioutil"
+
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/knownhosts"
 )
@@ -16,10 +19,12 @@ type ClusterNode struct {
 	User           string
 	Hostname       string
 	Port           int
+	Addr           string
 	Auth           []ssh.AuthMethod
 	Config         *ssh.ClientConfig
 	HostKeyCheck   bool
 	KnownHostsFile string
+	Client         *ssh.Client
 }
 
 // CreateNode returns a single node for the cluster
@@ -35,6 +40,7 @@ func CreateNode(user, hostname string, options ...NodeOption) (*ClusterNode, err
 			return nil, err
 		}
 	}
+	node.Addr = fmt.Sprintf("%s:%d", node.Hostname, node.Port)
 
 	return &node, nil
 }
@@ -66,6 +72,43 @@ func (node *ClusterNode) GetConfig() error {
 	node.Config = &config
 	return nil
 
+}
+
+// Dial creates an ssh connection on a cluster node. node.Close() must be called to close the networking connection
+// Repeated calls to Dial return silently if there is alreay a connection present
+func (node *ClusterNode) Dial() error {
+	if node.Client != nil { // FIXME: is there some ssh ping to ensure a valid connection?
+		return nil
+	}
+	var err error
+	node.Client, err = ssh.Dial("tcp", node.Addr, node.Config)
+	return err
+}
+
+// Close closes the networking conection to a node. Multiple calls to Close return silently.
+func (node *ClusterNode) Close() error {
+	if node.Client == nil {
+		return nil
+	}
+	err := node.Client.Close()
+	node.Client = nil
+	return err
+
+}
+
+// GetPrivateKeyAuth returns an ssh PublicKeys auth method provided a unencrypted private key file name
+func GetPrivateKeyAuth(file string) (ssh.AuthMethod, error) {
+	var auth ssh.AuthMethod
+	buff, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+	key, err := ssh.ParsePrivateKey(buff)
+	if err != nil {
+		return nil, err
+	}
+	auth = ssh.PublicKeys(key)
+	return auth, nil
 }
 
 // NodeOption is a function which changes settings on a cluster node
@@ -111,5 +154,14 @@ func NodeOptionConfig(config *ssh.ClientConfig) NodeOption {
 func NodeOptionHostKeyCheck(check bool) NodeOption {
 	return func(node *ClusterNode) {
 		node.HostKeyCheck = check
+	}
+}
+
+// NodeOptionCompose composes several options into one
+func NodeOptionCompose(options ...NodeOption) NodeOption {
+	return func(node *ClusterNode) {
+		for _, opt := range options {
+			opt(node)
+		}
 	}
 }
