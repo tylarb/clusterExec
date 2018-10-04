@@ -35,7 +35,7 @@ func CreateNode(user, hostname string, options ...NodeOption) (*ClusterNode, err
 		opt(&node)
 	}
 
-	if node.Config == nil { // config isn't provided as a NodeOption, we'll compose it from other options
+	if node.Config == nil && !node.Localhost { // config isn't provided as a NodeOption, we'll compose it from other options
 		if err := node.GetConfig(); err != nil {
 			return nil, err
 		}
@@ -77,7 +77,7 @@ func (node *ClusterNode) GetConfig() error {
 // Dial creates an ssh connection on a cluster node. node.Close() must be called to close the networking connection
 // Repeated calls to Dial return silently if there is alreay a connection present
 func (node *ClusterNode) Dial() error {
-	if node.Client != nil { // FIXME: is there some ssh ping to ensure a valid connection?
+	if node.Client != nil || node.Localhost { // FIXME: is there some ssh ping to ensure a valid connection?
 		return nil
 	}
 	var err error
@@ -87,7 +87,7 @@ func (node *ClusterNode) Dial() error {
 
 // Close closes the networking conection to a node. Multiple calls to Close return silently.
 func (node *ClusterNode) Close() error {
-	if node.Client == nil {
+	if node.Client == nil || node.Localhost {
 		return nil
 	}
 	err := node.Client.Close()

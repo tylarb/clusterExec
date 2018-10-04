@@ -3,6 +3,7 @@ package clusterExec
 import (
 	"bytes"
 	"fmt"
+	"os/exec"
 	"time"
 
 	"golang.org/x/crypto/ssh"
@@ -42,8 +43,37 @@ func (node *ClusterNode) Run(command *ClusterCmd) (stdOut, stdErr string, err er
 
 // runs command locally if localhost
 func (node *ClusterNode) runLocalCommand(command *ClusterCmd) (stdOut, stdErr string, err error) {
+	retError := make(chan error)
+	timeout := make(chan bool)
 
-	return "", "", nil
+	var stdOutBuff, stdErrBuff bytes.Buffer
+	cmd := exec.Command(command.Cmd, command.Args...)
+	cmd.Stdout = &stdOutBuff
+	cmd.Stderr = &stdErrBuff
+	if err := cmd.Start(); err != nil {
+		return "", "", &CommandExecutionError{fmt.Sprintf("Command failed to start"), node, command, err}
+	}
+	go func() {
+		retError <- cmd.Wait()
+	}()
+	if command.Timeout > 0 {
+		go func(t time.Duration) {
+			time.Sleep(t)
+			timeout <- true
+		}(command.Timeout)
+	}
+
+	select {
+	case err := <-retError:
+
+		if err != nil {
+			return stdOutBuff.String(), stdErrBuff.String(), &CommandExecutionError{fmt.Sprintf("Command returned failed"), node, command, err}
+		}
+		return stdOutBuff.String(), stdErrBuff.String(), nil
+	case <-timeout:
+		cmd.Process.Kill()
+		return "", "", &CommandTimeoutError{fmt.Sprintf("timeout after %s", command.Timeout), node, command}
+	}
 }
 
 // runs commands remotely over ssh
@@ -63,8 +93,7 @@ func (node *ClusterNode) runRemoteCommand(command *ClusterCmd) (stdOut, stdErr s
 	session.Stdout = &stdOutBuff
 	session.Stderr = &stdErrBuff
 	cmdString := composeCmd(command.Cmd, command.Args)
-	err = session.Start(cmdString)
-	if err != nil {
+	if err = session.Start(cmdString); err != nil {
 		return "", "", &CommandExecutionError{fmt.Sprintf("Command failed to start"), node, command, err} // Return err : command could not start with err
 	}
 	go func() {

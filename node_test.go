@@ -10,12 +10,12 @@ import (
 func TestCreateNode(t *testing.T) {
 
 	config := &ssh.ClientConfig{
-		User: user,
+		User: USER,
 		Auth: []ssh.AuthMethod{
 			ssh.Password(cluster22.password),
 		},
 	}
-	node22, err := CreateNode(user, cluster22.node0, NodeOptionConfig(config))
+	node22, err := CreateNode(USER, cluster22.node0, NodeOptionConfig(config))
 	if err != nil {
 		t.Error(err)
 	}
@@ -27,12 +27,12 @@ func TestCreateNode(t *testing.T) {
 		t.Log("Failed to set hostname for node1")
 		t.Fail()
 	}
-	if node22.User != user {
-		t.Log("Failed to set user for node1")
+	if node22.User != USER {
+		t.Log("Failed to set USER for node1")
 		t.Fail()
 	}
 
-	node25, err := CreateNode(user, cluster25.node0, NodeOptionPort(cluster25.port), NodeOptionAuthMethod(ssh.Password(cluster25.password)), NodeOptionKnownHostsFile(dir+"/known_hosts"))
+	node25, err := CreateNode(USER, cluster25.node0, NodeOptionPort(cluster25.port), NodeOptionAuthMethod(ssh.Password(cluster25.password)), NodeOptionKnownHostsFile(dir+"/known_hosts"))
 	if err != nil {
 		t.Error(err)
 	}
@@ -49,7 +49,7 @@ func TestCreateNode(t *testing.T) {
 
 func TestGetConfig(t *testing.T) {
 
-	node, err := CreateNode(user, cluster25.node0, NodeOptionPort(cluster25.port), NodeOptionAuthMethod(ssh.Password(cluster25.password)), NodeOptionKnownHostsFile(dir+"/known_hosts"))
+	node, err := CreateNode(USER, cluster25.node0, NodeOptionPort(cluster25.port), NodeOptionAuthMethod(ssh.Password(cluster25.password)), NodeOptionKnownHostsFile(dir+"/known_hosts"))
 	if err != nil {
 		t.Error(err)
 	}
@@ -62,6 +62,7 @@ func TestGetConfig(t *testing.T) {
 	client, err := ssh.Dial("tcp", hostaddress, node.Config)
 	if err != nil {
 		t.Log("Failed to generate valid config")
+		t.Logf("hostaddress: %s", hostaddress)
 		t.Log(err)
 		t.Fail()
 	} else {

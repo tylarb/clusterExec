@@ -37,7 +37,7 @@ func TestRunRemoteCommand(t *testing.T) {
 
 	clusterCmd := CreateClusterCommand(command, args)
 
-	stdOut, stdErr, err := clusterNode.runRemoteCommand(clusterCmd)
+	stdOut, stdErr, err := sshNode.runRemoteCommand(clusterCmd)
 	if err != nil {
 		t.Log(err)
 		t.Fail()
@@ -57,7 +57,7 @@ func TestRunRemoteCommandTimeout(t *testing.T) {
 	command := "cat"
 	args := []string{"/dev/random"}
 	clusterCmd := CreateClusterCommand(command, args, ClusterCmdOptionTimeout(timeout))
-	stdOut, stdErr, err := clusterNode.runRemoteCommand(clusterCmd)
+	stdOut, stdErr, err := sshNode.runRemoteCommand(clusterCmd)
 	if T, ok := err.(*CommandTimeoutError); !ok {
 		t.Logf("expected timeout error, but instead received type %v", T)
 		t.Fail()
@@ -65,4 +65,72 @@ func TestRunRemoteCommandTimeout(t *testing.T) {
 		t.Logf("ran command %s with timeout of %s", composeCmd(command, args), timeout)
 		t.Logf("stdout: %s, stderr: %s", stdOut, stdErr)
 	}
+}
+
+func TestRemoteCommandFailedStart(t *testing.T) {
+	command := "NotACommand"
+	args := []string{"not", "an", "arg"}
+
+	clusterCmd := CreateClusterCommand(command, args)
+
+	_, _, err := sshNode.runRemoteCommand(clusterCmd)
+	if T, ok := err.(*CommandExecutionError); !ok {
+		t.Logf("Expected execution error, instead recieved type %v", T)
+		t.Fail()
+	} else {
+		t.Logf("ran command %s and correctly received err %s", composeCmd(command, args), err)
+	}
+}
+
+func TestLocalCommand(t *testing.T) {
+	command := "echo"
+	args := []string{"$MYTESTENV"}
+
+	clusterCmd := CreateClusterCommand(command, args)
+
+	stdOut, stdErr, err := localhostNode.runLocalCommand(clusterCmd)
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+	if stdOut != "MyTestEnv\n" || stdErr != "" {
+		t.Logf("Incorrect output - got %s, %s; expected %s, %s", stdOut, stdErr, "MyTestEnv\n", "")
+		t.Fail()
+	} else {
+		t.Logf("ran command %s with output %s", command, stdOut)
+	}
+
+}
+
+func TestLocalCommandTimeout(t *testing.T) {
+
+	timeout := time.Second * 5
+
+	command := "cat"
+	args := []string{"/dev/random"}
+	clusterCmd := CreateClusterCommand(command, args, ClusterCmdOptionTimeout(timeout))
+	stdOut, stdErr, err := localhostNode.runLocalCommand(clusterCmd)
+	if T, ok := err.(*CommandTimeoutError); !ok {
+		t.Logf("expected timeout error, but instead received type %v", T)
+		t.Fail()
+	} else {
+		t.Logf("ran command %s with timeout of %s", composeCmd(command, args), timeout)
+		t.Logf("stdout: %s, stderr: %s", stdOut, stdErr)
+	}
+}
+
+func TestLocalCommandFailedStart(t *testing.T) {
+	command := "NotACommand"
+	args := []string{"not", "an", "arg"}
+
+	clusterCmd := CreateClusterCommand(command, args)
+
+	_, _, err := localhostNode.runLocalCommand(clusterCmd)
+	if T, ok := err.(*CommandExecutionError); !ok {
+		t.Logf("Expected execution error, instead recieved type %v", T)
+		t.Fail()
+	} else {
+		t.Logf("ran command %s and correctly received err %s", composeCmd(command, args), err)
+	}
+
 }

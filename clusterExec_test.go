@@ -4,12 +4,13 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/user"
 	"testing"
 
 	"golang.org/x/crypto/ssh"
 )
 
-var user string
+var USER string
 var cluster22 struct {
 	node0, node1, node2, node3 string
 	port                       int
@@ -22,20 +23,21 @@ var cluster25 struct {
 	password                   string
 }
 
-var clusterNode *ClusterNode
+var sshNode *ClusterNode
+var localhostNode *ClusterNode
 
 var dir string
 
 func TestMain(m *testing.M) {
-	user = os.Getenv("TEST_USER")
-	if user == "" {
-		user = "root"
+	USER = os.Getenv("TEST_USER")
+	if USER == "" {
+		USER = "root"
 	}
 	dir = os.Getenv("TRAVIS_BUILD_DIR")
 	if dir == "" {
 		dir = os.Getenv("HOME") + "/.ssh"
 	}
-	fmt.Printf("ssh dir in use: %s", dir)
+	fmt.Printf("ssh dir in use: %s\n", dir)
 
 	cluster22.node0 = "172.22.0.10"
 	cluster22.node1 = "172.22.0.11"
@@ -57,20 +59,32 @@ func TestMain(m *testing.M) {
 	if cluster25.password == "" {
 		cluster25.password = "password"
 	}
+	if err := os.Setenv("MYTESTENV", "MyTestEnv"); err != nil {
+		fmt.Printf("Could not set env variable\n")
+		os.Exit(2)
+	}
+
 	var err error
-	clusterNode, err = CreateNode(user, cluster22.node0, NodeOptionAuthMethod(ssh.Password(cluster22.password)), NodeOptionHostKeyCheck(false))
+	sshNode, err = CreateNode(USER, cluster22.node0, NodeOptionAuthMethod(ssh.Password(cluster22.password)), NodeOptionHostKeyCheck(false))
 	if err != nil {
 		fmt.Printf("Could not connect to ssh node with err %v", err)
 		os.Exit(2)
 	}
-	if err := clusterNode.Dial(); err != nil {
+	if err := sshNode.Dial(); err != nil {
 		fmt.Printf("Could not connect to ssh node with err %v", err)
 		os.Exit(2)
 	}
+	defer sshNode.Close()
+	osuser, err := user.Current()
+	if err != nil {
+		fmt.Printf("failed getting current os user")
+		os.Exit(2)
+	}
+	username := osuser.Name
+	localhostNode, err = CreateNode(username, "localhost", NodeOptionIsLocalhost())
 
 	flag.Parse()
 	exitCode := m.Run()
 
-	clusterNode.Close()
 	os.Exit(exitCode)
 }
