@@ -84,7 +84,7 @@ func TestRemoteCommandFailedStart(t *testing.T) {
 
 func TestLocalCommand(t *testing.T) {
 	command := "echo"
-	args := []string{"$MYTESTENV"}
+	args := []string{"This is a test"}
 
 	clusterCmd := CreateClusterCommand(command, args)
 
@@ -93,8 +93,8 @@ func TestLocalCommand(t *testing.T) {
 		t.Log(err)
 		t.Fail()
 	}
-	if stdOut != "MyTestEnv\n" || stdErr != "" {
-		t.Logf("Incorrect output - got %s, %s; expected %s, %s", stdOut, stdErr, "MyTestEnv\n", "")
+	if stdOut != "This is a test\n" || stdErr != "" {
+		t.Logf("Incorrect output - got %s, %s; expected %s, %s", stdOut, stdErr, "This is a test\n", "")
 		t.Fail()
 	} else {
 		t.Logf("ran command %s with output %s", command, stdOut)

@@ -59,10 +59,6 @@ func TestMain(m *testing.M) {
 	if cluster25.password == "" {
 		cluster25.password = "password"
 	}
-	if err := os.Setenv("MYTESTENV", "MyTestEnv"); err != nil {
-		fmt.Printf("Could not set env variable\n")
-		os.Exit(2)
-	}
 
 	var err error
 	sshNode, err = CreateNode(USER, cluster22.node0, NodeOptionAuthMethod(ssh.Password(cluster22.password)), NodeOptionHostKeyCheck(false))
