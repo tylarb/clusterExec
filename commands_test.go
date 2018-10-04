@@ -51,7 +51,7 @@ func TestRunRemoteCommand(t *testing.T) {
 		t.Logf("Incorrect output - got %s, %s; expected %s, %s", stdOut, stdErr, "ssh0.cluster22", "")
 		t.Fail()
 	}
-
+	t.Logf("ran command %s with output %s", command, stdOut)
 }
 
 func TestRunRemoteCommandTimeout(t *testing.T) {
@@ -65,10 +65,11 @@ func TestRunRemoteCommandTimeout(t *testing.T) {
 	command := "cat"
 	args := []string{"/dev/random"}
 	clusterCmd := CreateClusterCommand(command, args, ClusterCmdOptionTimeout(timeout))
-	_, _, err = node.runRemoteCommand(clusterCmd)
+	stdOut, stdErr, err := node.runRemoteCommand(clusterCmd)
 	if T, ok := err.(CommandTimeoutError); !ok {
 		t.Logf("expected timeout error, but instead received type %v", T)
 		t.Fail()
 	}
-
+	t.Logf("ran command %s with timeout of %s", composeCmd(command, args), timeout)
+	t.Logf("stdout: %s, stderr: %s", stdOut, stdErr)
 }
