@@ -101,7 +101,7 @@ type CommandTimeoutError struct {
 	Command *ClusterCmd
 }
 
-func (t CommandTimeoutError) Error() string {
+func (t *CommandTimeoutError) Error() string {
 	return fmt.Sprintf("clusterExec: node address %s: command %s: %s", t.Node.Addr, t.Command.Cmd, t.err)
 }
 
@@ -112,7 +112,7 @@ type NodeConnectionError struct {
 	Node *ClusterNode
 }
 
-func (n NodeConnectionError) Error() string {
+func (n *NodeConnectionError) Error() string {
 	return fmt.Sprintf("clusterExec: node address %s: %s", n.Node.Addr, n.err)
 }
 
@@ -125,7 +125,7 @@ type CommandExecutionError struct {
 	ExecutionError error
 }
 
-func (c CommandExecutionError) Error() string {
+func (c *CommandExecutionError) Error() string {
 	return fmt.Sprintf("clusterExec: node address %s: Command: %s Command Execution failed %s", c.Node.Addr, c.Command.Cmd, c.err)
 }
 

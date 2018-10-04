@@ -35,6 +35,7 @@ func TestMain(m *testing.M) {
 	if dir == "" {
 		dir = os.Getenv("HOME") + "/.ssh"
 	}
+	fmt.Printf("ssh dir in use: %s", dir)
 
 	cluster22.node0 = "172.22.0.10"
 	cluster22.node1 = "172.22.0.11"

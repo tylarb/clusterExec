@@ -44,7 +44,7 @@ func TestCreateNode(t *testing.T) {
 		t.Log("Failed to set known_hosts for node2")
 		t.Fail()
 	}
-	t.Log("Created node with options successfully")
+	t.Log("Created node with options")
 }
 
 func TestGetConfig(t *testing.T) {
@@ -64,7 +64,8 @@ func TestGetConfig(t *testing.T) {
 		t.Log("Failed to generate valid config")
 		t.Log(err)
 		t.Fail()
+	} else {
+		t.Log("Created a config")
 	}
-	t.Log("Created a valid config")
 	client.Close()
 }
