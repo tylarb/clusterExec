@@ -58,10 +58,10 @@ func (node *ClusterNode) runRemoteCommand(command *ClusterCmd) (stdOut, stdErr s
 		return "", "", err
 	}
 	defer session.Close()
-	var stdOutBuff, stdErrBuff *bytes.Buffer
+	var stdOutBuff, stdErrBuff bytes.Buffer
 
-	session.Stdout = stdOutBuff
-	session.Stderr = stdErrBuff
+	session.Stdout = &stdOutBuff
+	session.Stderr = &stdErrBuff
 	cmdString := composeCmd(command.Cmd, command.Args)
 	err = session.Start(cmdString)
 	if err != nil {
