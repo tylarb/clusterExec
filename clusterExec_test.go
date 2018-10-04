@@ -2,8 +2,11 @@ package clusterExec
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"testing"
+
+	"golang.org/x/crypto/ssh"
 )
 
 var user string
@@ -18,6 +21,8 @@ var cluster25 struct {
 	port                       int
 	password                   string
 }
+
+var clusterNode *ClusterNode
 
 var dir string
 
@@ -51,8 +56,20 @@ func TestMain(m *testing.M) {
 	if cluster25.password == "" {
 		cluster25.password = "password"
 	}
+	var err error
+	clusterNode, err = CreateNode(user, cluster22.node0, NodeOptionAuthMethod(ssh.Password(cluster22.password)), NodeOptionHostKeyCheck(false))
+	if err != nil {
+		fmt.Printf("Could not connect to ssh node with err %v", err)
+		os.Exit(2)
+	}
+	if err := clusterNode.Dial(); err != nil {
+		fmt.Printf("Could not connect to ssh node with err %v", err)
+		os.Exit(2)
+	}
 
 	flag.Parse()
 	exitCode := m.Run()
+
+	clusterNode.Close()
 	os.Exit(exitCode)
 }
