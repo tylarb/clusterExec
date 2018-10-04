@@ -1,6 +1,7 @@
 package clusterExec
 
 import (
+	"flag"
 	"os"
 	"testing"
 )
@@ -20,7 +21,7 @@ var cluster25 struct {
 
 var dir string
 
-func TestMain(t *testing.M) {
+func TestMain(m *testing.M) {
 	user = os.Getenv("TEST_USER")
 	if user == "" {
 		user = "root"
@@ -51,4 +52,7 @@ func TestMain(t *testing.M) {
 		cluster25.password = "password"
 	}
 
+	flag.Parse()
+	exitCode := m.Run()
+	os.Exit(exitCode)
 }
