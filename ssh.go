@@ -1,4 +1,4 @@
-package clusterExec
+package clusterexec
 
 import (
 	"fmt"
@@ -128,10 +128,12 @@ func NodeOptionIsLocalhost() NodeOption {
 	}
 }
 
-// NodeOptionAuthMethod adds an ssh authentication method to a node
-func NodeOptionAuthMethod(auth ssh.AuthMethod) NodeOption {
+// NodeOptionAuthMethod adds one or more ssh authentication method to a node
+func NodeOptionAuthMethod(auths ...ssh.AuthMethod) NodeOption {
 	return func(node *ClusterNode) {
-		node.Auth = append(node.Auth, auth)
+		for _, auth := range auths {
+			node.Auth = append(node.Auth, auth)
+		}
 	}
 }
 

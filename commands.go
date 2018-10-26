@@ -1,4 +1,4 @@
-package clusterExec
+package clusterexec
 
 import (
 	"bytes"
@@ -16,12 +16,6 @@ type ClusterCmd struct {
 	Timeout time.Duration
 }
 
-//ClusterCmdOut is the output of a command run on a cluster
-/* type ClusterCmdOut struct {
-	err            error
-	Stdout, Stderr *bytes.Buffer
-} */
-
 // CreateClusterCommand creates a new cluster command
 func CreateClusterCommand(cmd string, args []string, options ...ClusterCmdOption) *ClusterCmd {
 	clusterCommand := ClusterCmd{Cmd: cmd, Args: args}
@@ -32,19 +26,21 @@ func CreateClusterCommand(cmd string, args []string, options ...ClusterCmdOption
 }
 
 // Run executes a command on a cluster node. // TODO: clarify errors returned
-func (node *ClusterNode) Run(command *ClusterCmd) (stdOut, stdErr string, err error) {
+func (node *ClusterNode) Run(command *ClusterCmd) (stdout, stderr string, err error) {
 	if node.Localhost {
-		stdOut, stdErr, err = node.runLocalCommand(command)
+		stdout, stderr, err = node.runLocalCommand(command)
 	} else {
-		stdOut, stdErr, err = node.runRemoteCommand(command)
+		stdout, stderr, err = node.runRemoteCommand(command)
 	}
-	return "", "", err
+	return stdout, stderr, err
 }
 
 // runs command locally if localhost
 func (node *ClusterNode) runLocalCommand(command *ClusterCmd) (stdOut, stdErr string, err error) {
 	retError := make(chan error)
 	timeout := make(chan bool)
+	defer close(retError)
+	defer close(timeout)
 
 	var stdOutBuff, stdErrBuff bytes.Buffer
 	cmd := exec.Command(command.Cmd, command.Args...)
@@ -80,6 +76,9 @@ func (node *ClusterNode) runLocalCommand(command *ClusterCmd) (stdOut, stdErr st
 func (node *ClusterNode) runRemoteCommand(command *ClusterCmd) (stdOut, stdErr string, err error) {
 	retError := make(chan error)
 	timeout := make(chan bool)
+	defer close(retError)
+	defer close(timeout)
+
 	if node.Client == nil {
 		return "", "", &NodeConnectionError{"No existing ssh connection", node}
 	}
@@ -131,7 +130,7 @@ type CommandTimeoutError struct {
 }
 
 func (t *CommandTimeoutError) Error() string {
-	return fmt.Sprintf("clusterExec: node address %s: command %s: %s", t.Node.Addr, t.Command.Cmd, t.err)
+	return fmt.Sprintf("clusterexec: node address %s: command %s: %s", t.Node.Addr, t.Command.Cmd, t.err)
 }
 
 // NodeConnectionError is returned if a node does not have an existing client connection when
@@ -142,7 +141,7 @@ type NodeConnectionError struct {
 }
 
 func (n *NodeConnectionError) Error() string {
-	return fmt.Sprintf("clusterExec: node address %s: %s", n.Node.Addr, n.err)
+	return fmt.Sprintf("clusterexec: node address %s: %s", n.Node.Addr, n.err)
 }
 
 // CommandExecutionError is returned when there is some problem starting or executing a command.
@@ -155,7 +154,7 @@ type CommandExecutionError struct {
 }
 
 func (c *CommandExecutionError) Error() string {
-	return fmt.Sprintf("clusterExec: node address %s: Command: %s Command Execution failed %s", c.Node.Addr, c.Command.Cmd, c.err)
+	return fmt.Sprintf("clusterexec: node address %s: Command: %s Command Execution failed %s", c.Node.Addr, c.Command.Cmd, c.err)
 }
 
 // CommandsRun runs an array of cluster commands via goroutines

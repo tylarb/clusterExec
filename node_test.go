@@ -1,4 +1,4 @@
-package clusterExec
+package clusterexec
 
 import (
 	"fmt"

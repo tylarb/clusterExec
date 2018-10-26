@@ -1,7 +1,7 @@
 // misc.go contains various useful formatting/other functions
 // Released under MIT liscence, copyright 2018 Tyler Ramer
 
-package clusterExec
+package clusterexec
 
 import (
 	"strings"
